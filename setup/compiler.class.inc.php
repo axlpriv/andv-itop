@@ -488,15 +488,13 @@ EOF;
 				{
 					// Write the code into the given module as model.<module>.php
 					//
-					$sResultFile = $sTempTargetDir.'/'.$sRelativeDir.'/model.'.$sModuleName.'.php';
-					if (is_file($sResultFile))
-					{
+					$sModelFileName = 'model.'.$sModuleName.'.php';
+					$sResultFile = $sTempTargetDir.'/'.$sRelativeDir.'/'.$sModelFileName;
+					if (is_file($sResultFile)) {
 						$this->Log("Updating $sResultFile for module $sModuleName in version $sModuleVersion ($iClassCount classes)");
-					} else
-					{
+					} else {
 						$sResultDir = dirname($sResultFile);
-						if (!is_dir($sResultDir))
-						{
+						if (!is_dir($sResultDir)) {
 							$this->Log("Creating directory $sResultDir");
 							mkdir($sResultDir, 0777, true);
 						}
@@ -525,20 +523,22 @@ EOF;
 
 EOF;
 					$ret = file_put_contents($sResultFile, $sFileHeader.$sCompiledCode);
-					if ($ret === false)
-					{
+					if ($ret === false) {
 						$iLen = strlen($sFileHeader.$sCompiledCode);
 						$fFree = @disk_free_space(dirname($sResultFile));
 						$aErr = error_get_last();
 						throw new Exception("Failed to write '$sResultFile'. Last error: '{$aErr['message']}', content to write: $iLen bytes, available free space on disk: $fFree.");
 					}
+
+					// In case the model file wasn't present in the module file, we're adding it ! (N°4875)
+					$oModule->AddFileToInclude('business', $sModelFileName);
 				}
 				else
 				{
 					// Write the code into core/main.php
 					//
 					$this->sMainPHPCode .=
-					<<<EOF
+						<<<EOF
 /**
  * Data model from the delta file
  */
@@ -546,20 +546,16 @@ EOF;
 EOF;
 					$this->sMainPHPCode .= $sCompiledCode;
 				}
-			}
-			else
-			{
-					$this->Log("Compilation of module $sModuleName in version $sModuleVersion produced not code at all. No file written.");
+			} else {
+				$this->Log("Compilation of module $sModuleName in version $sModuleVersion produced not code at all. No file written.");
 			}
 
 			// files to include (PHP datamodels)
-			foreach($oModule->GetFilesToInclude('business') as $sRelFileName)
-			{
+			foreach ($oModule->GetFilesToInclude('business') as $sRelFileName) {
 				$aDataModelFiles[] = "MetaModel::IncludeModule(MODULESROOT.'/$sRelativeDir/$sRelFileName');";
 			}
 			// files to include (PHP webservices providers)
-			foreach($oModule->GetFilesToInclude('webservices') as $sRelFileName)
-			{
+			foreach ($oModule->GetFilesToInclude('webservices') as $sRelFileName) {
 				$aWebservicesFiles[] = "MetaModel::IncludeModule(MODULESROOT.'/$sRelativeDir/$sRelFileName');";
 			}
 		} // foreach module

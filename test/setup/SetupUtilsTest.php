@@ -60,9 +60,7 @@ class SetupUtilsTest extends ItopTestCase
 				"/bin/ls",
 				1,
 				"dot could not be executed (retcode=2): Please make sure it is installed and in the path",
-			]
+			],
 		];
 	}
-
-
 }
